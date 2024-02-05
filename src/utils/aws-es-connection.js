@@ -44,12 +44,19 @@ class AWSSignedConnection extends Connection {
 
 class AWSElasticsearchClient {
   constructor (node, options = {}) {
-    this.node = node
+    this.node = { node }
     this.options = options
-    this.credentialsProvider = new AWSCredentialsProvider()
+    this.credentialsProvider = options?.provider === 'aws' ? new AWSCredentialsProvider() : null
   }
 
   async connect () {
+    if (!this.credentialsProvider) {
+      return new Client({
+        ...this.node,
+        ...this.options
+      })
+    }
+
     const awsCredentials = await this.credentialsProvider.getCredentials()
 
     const AWSConnection = {
@@ -67,7 +74,7 @@ class AWSElasticsearchClient {
 
     return new Client({
       ...AWSConnection,
-      node: this.node,
+      ...this.node,
       ...this.options
     })
   }

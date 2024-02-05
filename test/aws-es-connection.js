@@ -16,7 +16,7 @@ describe('AWSElasticsearchClient', () => {
 
   before(async () => {
     const esEndpoint = 'http://localhost:4571'
-    const awsEsClient = new AWSElasticsearchClient(esEndpoint)
+    const awsEsClient = new AWSElasticsearchClient(esEndpoint, { provider: 'aws' })
 
     spyCredentials = chai.spy.on(awsEsClient.credentialsProvider, 'getCredentials')
 
@@ -28,6 +28,11 @@ describe('AWSElasticsearchClient', () => {
   it('AWS creds are retrieved before each async call', async () => {
     await esClient.cat.health()
     expect(spyCredentials).to.have.been.called()
+  })
+
+  it('CredentialsProvider is null when provider is not "aws"', () => {
+    const esClient = new AWSElasticsearchClient('http://localhost:9200')
+    assert.isNull(esClient.credentialsProvider)
   })
 
   it('indices async', async () => {

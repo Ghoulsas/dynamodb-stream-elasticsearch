@@ -73,4 +73,9 @@ export interface streamOptions {
      * [here](https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/16.x/configuration.html#config-options)
      */
     elasticSearchOptions?: ClientOptions;
+
+    /**
+     * Provider to use AWS services
+     */
+    provider?: 'aws' | undefined;
 }
