@@ -1,28 +1,8 @@
 import { ClientOptions } from '@elastic/elasticsearch';
-import { DynamoDBStreamEvent, DynamoDBRecord } from '@types/aws-lambda';
+import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
 
 export function pushStream(opts: streamOptions): Promise<void>;
-interface DynamoDBRecord {
-    awsRegion?: string | undefined;
-    dynamodb?: StreamRecord | undefined;
-    eventID?: string | undefined;
-    eventName?: 'INSERT' | 'MODIFY' | 'REMOVE' | undefined;
-    eventSource?: string | undefined;
-    eventSourceARN?: string | undefined;
-    eventVersion?: string | undefined;
-    userIdentity?: any;
-}
-
-interface StreamRecord {
-    ApproximateCreationDateTime?: number | undefined;
-    Keys?: { [key: string]: AttributeValue } | undefined;
-    NewImage?: { [key: string]: AttributeValue } | undefined;
-    OldImage?: { [key: string]: AttributeValue } | undefined;
-    SequenceNumber?: string | undefined;
-    SizeBytes?: number | undefined;
-    StreamViewType?: 'KEYS_ONLY' | 'NEW_IMAGE' | 'OLD_IMAGE' | 'NEW_AND_OLD_IMAGES' | undefined;
-}
 export type transformFunction = (
     body?: { [key: string]: any },
     oldBody?: { [key: string]: AttributeValue },

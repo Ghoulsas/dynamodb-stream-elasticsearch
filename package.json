@@ -38,10 +38,10 @@
     "@aws-sdk/client-dynamodb": "3.*.*",
     "@aws-sdk/client-lambda": "3.*.*",
     "@aws-sdk/credential-provider-node": "3.*.*",
+    "@aws-sdk/util-dynamodb": "3.*.*",
     "@smithy/node-http-handler": "2.*.*",
     "@smithy/protocol-http": "3.*.*",
     "@smithy/signature-v4": "2.*.*",
-    "@aws-sdk/util-dynamodb": "3.*.*",
     "chai": "^4.3.4",
     "chai-spies": "^1.0.0",
     "eslint": "^7.31.0",
@@ -60,13 +60,14 @@
     "lodash.flatmap": "4.5.0"
   },
   "peerDependencies": {
+    "@types/aws-lambda": "^8.10.133",
     "@aws-sdk/client-dynamodb": "3.*.*",
     "@aws-sdk/client-lambda": "3.*.*",
     "@aws-sdk/credential-provider-node": "3.*.*",
+    "@aws-sdk/util-dynamodb": "3.*.*",
     "@smithy/node-http-handler": "2.*.*",
     "@smithy/protocol-http": "3.*.*",
-    "@smithy/signature-v4": "2.*.*",
-    "@aws-sdk/util-dynamodb": "3.*.*"
+    "@smithy/signature-v4": "2.*.*"
   },
   "typings": "./src/index.d.ts"
 }
