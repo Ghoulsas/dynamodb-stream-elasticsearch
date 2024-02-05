@@ -1,6 +1,5 @@
-const AWS = require('aws-sdk')
 const flatMap = require('lodash.flatmap')
-const converter = AWS.DynamoDB.Converter.unmarshall
+const converter = require('@aws-sdk/util-dynamodb').unmarshall
 const elastic = require('./utils/es-wrapper')
 const getTableNameFromARN = require('./utils/table-name-from-arn')
 const { removeEventData } = require('./utils/index')
