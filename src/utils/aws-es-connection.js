@@ -1,8 +1,8 @@
 const { Client, Connection, Transport } = require('@elastic/elasticsearch')
 const { defaultProvider } = require('@aws-sdk/credential-provider-node')
-const { SignatureV4 } = require('@aws-sdk/signature-v4')
-const { HttpRequest } = require('@aws-sdk/protocol-http')
-const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
+const { SignatureV4 } = require('@smithy/signature-v4')
+const { HttpRequest } = require('@smithy/protocol-http')
+const { NodeHttpHandler } = require('@smithy/node-http-handler')
 const { Sha256 } = require('@aws-crypto/sha256-browser')
 
 class AWSCredentialsProvider {
