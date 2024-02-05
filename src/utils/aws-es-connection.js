@@ -1,70 +1,76 @@
-const { config } = require('aws-sdk/global')
-const { sign } = require('aws4')
-const { Connection, Transport } = require('@elastic/elasticsearch')
+const { Client, Connection, Transport } = require('@elastic/elasticsearch')
+const { defaultProvider } = require('@aws-sdk/credential-provider-node')
+const { SignatureV4 } = require('@aws-sdk/signature-v4')
+const { HttpRequest } = require('@aws-sdk/protocol-http')
+const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
+const { Sha256 } = require('@aws-crypto/sha256-browser')
 
-function generateAWSConnectionClass (credentials, endpoint, keepAlive) {
-  const client = endpoint.startsWith('https') ? require('https') : require('http')
-  const { request, Agent } = client
-  return class AWSConnection extends Connection {
-    constructor (opts) {
-      super(opts)
-      this.makeRequest = this.signedRequest
-    }
-
-    signedRequest (reqParams) {
-      const httpAgent = new Agent({ keepAlive: keepAlive })
-      return request(sign({ ...reqParams, agent: httpAgent, service: 'es' }, credentials))
-    }
+class AWSCredentialsProvider {
+  async getCredentials () {
+    return await defaultProvider()()
   }
 }
 
-function generateAWSTransportClass (credentials) {
-  return class AWSTransport extends Transport {
-    request (params, options, callback = undefined) {
-      if (typeof options === 'function') {
-        callback = options
-        options = {}
-      }
-      if (typeof params === 'function' || params == null) {
-        callback = params
-        params = {}
-        options = {}
-      }
-      // Wrap promise API
-      const isPromiseCall = typeof callback !== 'function'
-      if (isPromiseCall) {
-        return credentials.getPromise().then(() => super.request(params, options, callback))
-      }
-
-      // Wrap callback API
-      credentials.get(err => {
-        if (err) {
-          callback(err, null)
-          return
-        }
-
-        console.log({ params, options, callback })
-        return super.request(params, options, callback)
-      })
-    }
+class AWSSignedConnection extends Connection {
+  constructor (opts, awsCredentials) {
+    super(opts)
+    this.awsCredentials = awsCredentials
   }
-}
 
-const createAWSConnection = (awsCredentials, endpoint, keepAlive) => ({
-  Connection: generateAWSConnectionClass(awsCredentials, endpoint, keepAlive),
-  Transport: generateAWSTransportClass(awsCredentials)
-})
-
-const awsGetCredentials = () => {
-  return new Promise((resolve, reject) => {
-    config.getCredentials(err => {
-      if (err) {
-        return reject(err)
-      }
-
-      resolve(config.credentials)
+  async signedRequest (reqParams) {
+    const request = new HttpRequest({
+      ...reqParams,
+      protocol: 'https:',
+      hostname: reqParams.host,
+      port: 443,
+      path: reqParams.path,
+      method: reqParams.method,
+      headers: reqParams.headers,
+      body: reqParams.body
     })
-  })
+
+    const signer = new SignatureV4({
+      credentials: this.awsCredentials,
+      service: 'es',
+      sha256: Sha256
+    })
+
+    const signedRequest = await signer.sign(request)
+    const httpHandler = new NodeHttpHandler()
+    const { response } = await httpHandler.handle(signedRequest)
+    return response
+  }
 }
 
-module.exports = { createAWSConnection, awsGetCredentials }
+class AWSElasticsearchClient {
+  constructor (node, options = {}) {
+    this.node = node
+    this.options = options
+    this.credentialsProvider = new AWSCredentialsProvider()
+  }
+
+  async connect () {
+    const awsCredentials = await this.credentialsProvider.getCredentials()
+
+    const AWSConnection = {
+      Connection: class extends AWSSignedConnection {
+        constructor (opts) {
+          super(opts, awsCredentials)
+        }
+      },
+      Transport: class extends Transport {
+        async request (params, options) {
+          return super.request(params, options)
+        }
+      }
+    }
+
+    return new Client({
+      ...AWSConnection,
+      node: this.node,
+      ...this.options
+    })
+  }
+}
+
+module.exports = { AWSElasticsearchClient, AWSCredentialsProvider, AWSSignedConnection }
