@@ -1,14 +1,14 @@
 /* eslint-env mocha */
 const { assert } = require('chai')
 const fetch = require('node-fetch')
-const AWS = require('aws-sdk')
 const { pushStream } = require('./../src/index')
 const elastic = require('../src/utils/es-wrapper')
 const { sampleData, modifyEvent, removeEvent, insertEvent, multipleEvents, insertEventWithInconsitentTypes, modifyEventWithDeletedField } = require('./fixtures')
 const { removeEventData } = require('../src/utils/index')
 const getTableNameFromARN = require('../src/utils/table-name-from-arn')
 
-const converter = AWS.DynamoDB.Converter.unmarshall
+const converter = require('@aws-sdk/util-dynamodb').unmarshall
+
 const INDEX = 'test'
 const ES_ENDPOINT = 'http://localhost:9200'
 
