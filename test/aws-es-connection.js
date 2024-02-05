@@ -1,59 +1,33 @@
 /* eslint-env mocha */
-const { createAWSConnection, awsGetCredentials } = require('../src/utils/aws-es-connection')
-const AWS = require('aws-sdk')
-const { Client } = require('@elastic/elasticsearch')
+const { AWSElasticsearchClient } = require('../src/utils/aws-es-connection')
 const chai = require('chai')
 const { assert, expect } = chai
 const spies = require('chai-spies')
 chai.use(spies)
-
-describe('aws-es-connection', () => {
+function withCallback (promise, callback) {
+  promise
+    .then((result) => callback(null, result))
+    .catch((err) => callback(err, null))
+}
+describe('AWSElasticsearchClient', () => {
   let esClient
   let indexPrefix
+  let spyCredentials
 
   before(async () => {
     const esEndpoint = 'http://localhost:4571'
+    const awsEsClient = new AWSElasticsearchClient(esEndpoint)
 
-    // Try make an API call to check credentials are good
-    try {
-      await new AWS.ES({
-        region: 'us-east-1',
-        endpoint: 'http://localhost:4566',
-        credentials: { secretAccessKey: 'test', accessKeyId: 'test' }
-      })
-        .listElasticsearchVersions()
-        .promise()
-    } catch (err) {
-      console.error(err)
-      throw new Error('Failed to make an call to the AWS API. Check your AWS credentials are set and valid.')
-    }
+    spyCredentials = chai.spy.on(awsEsClient.credentialsProvider, 'getCredentials')
 
-    const awsEsConnection = createAWSConnection(await awsGetCredentials(), esEndpoint, false)
-    esClient = new Client({
-      ...awsEsConnection,
-      node: esEndpoint
-    })
+    esClient = await awsEsClient.connect()
 
     indexPrefix = `aws-es-connection-tests-${new Date().getTime()}`
   })
 
-  it('aws creds are retrieved before each async call', async () => {
-    const spy = chai.spy.on(AWS.config.credentials, 'getPromise')
+  it('AWS creds are retrieved before each async call', async () => {
     await esClient.cat.health()
-    expect(spy).to.have.been.called()
-  })
-
-  it('aws creds are retrieved before each callback call', (done) => {
-    const spy = chai.spy.on(AWS.config.credentials, 'get')
-
-    esClient.cat.health(() => {
-      try {
-        expect(spy).to.have.been.called()
-        done()
-      } catch (err) {
-        done(err)
-      }
-    })
+    expect(spyCredentials).to.have.been.called()
   })
 
   it('indices async', async () => {
@@ -73,23 +47,25 @@ describe('aws-es-connection', () => {
     const indexName = indexPrefix + '-indices-callback'
 
     const cleanUp = (callback) => {
-      esClient.indices.delete({ index: indexName }, callback)
+      withCallback(esClient.indices.delete({ index: indexName }), callback)
     }
 
     // Create and retrieve index
-    esClient.indices.create({ index: indexName }, (err) => {
+    withCallback(esClient.indices.create({ index: indexName }), (err) => {
       if (err) {
-        cleanUp(() => done(err))
+        return cleanUp(() => done(err))
       }
-      esClient.indices.get({ index: indexName }, (err, index) => {
+
+      withCallback(esClient.indices.get({ index: indexName }), (err, result) => {
         if (err) {
-          cleanUp(() => done(err))
-        }
-        try {
-          assert.hasAnyKeys(index.body, indexName)
-          cleanUp((err) => done(err))
-        } catch (err) {
           return cleanUp(() => done(err))
+        }
+
+        try {
+          assert.hasAnyKeys(result.body, indexName)
+          cleanUp(done)
+        } catch (error) {
+          cleanUp(() => done(error))
         }
       })
     })
