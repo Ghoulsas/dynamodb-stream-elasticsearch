@@ -1,5 +1,5 @@
 {
-  "name": "dynamodb-stream-elasticsearch",
+  "name": "dynamodb-stream-elasticsearch-beta-v3",
   "version": "3.3.1",
   "description": "Missing blueprint for AWS Lambda. Reads stream from AWS DynamoDB and writes it to AWS ElasticSearch.",
   "main": "src/index.js",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/matrus2/dynamodb-stream-elasticsearch.git"
+    "url": "git+https://github.com/Ghoulsas/dynamodb-stream-elasticsearch.git"
   },
   "keywords": [
     "AWS",
@@ -29,12 +29,11 @@
     "Stream",
     "Node"
   ],
-  "author": "Bogusz Przybyslawski <biuro@matrus.pl>",
-  "license": "MIT",
+   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/matrus2/dynamodb-stream-elasticsearch/issues"
+    "url": "https://github.com/Ghoulsas/dynamodb-stream-elasticsearch/issues"
   },
-  "homepage": "https://github.com/matrus2/dynamodb-stream-elasticsearch#readme",
+  "homepage": "https://github.com/Ghoulsas/dynamodb-stream-elasticsearch#readme",
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "3.*.*",
     "@aws-sdk/client-lambda": "3.*.*",
